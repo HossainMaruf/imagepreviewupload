@@ -1,8 +1,12 @@
-import React from 'react';
+import React from "react";
+import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
+import FileUpload from "./component/FileUpload";
 
 function App() {
   return (
-    <div>DONE</div>
+    <div className="container mt-5">
+      <FileUpload />
+    </div>
   );
 }
 
