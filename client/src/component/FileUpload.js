@@ -1,59 +1,61 @@
-import "react-dropzone-uploader/dist/styles.css";
-import Dropzone from "react-dropzone-uploader";
-import { getDroppedOrSelectedFiles } from "html5-file-selector";
+import React, { useState } from "react";
+import axios from "axios";
+import { Container, Row, Col, Form, Button, ProgressBar } from "react-bootstrap";
 
-const Component = () => {
-  const fileParams = ({ meta }) => {
-    return { url: "https://httpbin.org/post" };
-  };
-  const onFileChange = ({ meta, file }, status) => {
-    console.log(status, meta, file);
-  };
-  const onSubmit = (files, allFiles) => {
-    allFiles.forEach((f) => f.remove());
-  };
-  const getFilesFromEvent = (e) => {
-    return new Promise((resolve) => {
-      getDroppedOrSelectedFiles(e).then((chosenFiles) => {
-        resolve(chosenFiles.map((f) => f.fileObject));
-      });
+const FileUpload = () => {
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [progress, setProgress] = useState();
+
+  const submitHandler = (e) => {
+    e.preventDefault(); //prevent the form from submitting
+    // console.log(selectedFiles);
+    // return;
+    let formData = new FormData();
+
+
+    // console.log(Array.from(selectedFiles));
+    Array.from(selectedFiles).forEach((file) => {
+      formData.append('file', file);
+    })
+
+    axios.post("http://localhost:5000/upload_file", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (data) => {
+        //Set the progress value to show the progress bar
+        setProgress(Math.round((100 * data.loaded) / data.total));
+      },
     });
   };
-  const selectFileInput = ({ accept, onFiles, files, getFilesFromEvent }) => {
-    const textMsg = files.length > 0 ? "Upload Again" : "Select Files";
-    return (
-      <label className="btn btn-danger mt-4">
-        {textMsg}
-        <input
-          style={{ display: "none" }}
-          type="file"
-          accept={accept}
-          multiple
-          onChange={(e) => {
-            getFilesFromEvent(e).then((chosenFiles) => {
-              onFiles(chosenFiles);
-            });
-          }}
-        />
-      </label>
-    );
-  };
   return (
-    <Dropzone
-      onSubmit={onSubmit}
-      onChangeStatus={onFileChange}
-      InputComponent={selectFileInput}
-      getUploadParams={fileParams}
-      getFilesFromEvent={getFilesFromEvent}
-      accept="image/*,audio/*,video/*"
-      maxFiles={5}
-      inputContent="Drop A File"
-      styles={{
-        dropzone: { width: 600, height: 400 },
-        dropzoneActive: { borderColor: "green" },
-      }}
-    />
+    <Container>
+      <Row>
+        <Col lg={{ span: 4, offset: 3 }}>
+          <Form
+            encType="multipart/form-data"
+            onSubmit={submitHandler}
+          >
+            <Form.Group>
+              <input
+                type="file"
+                name="file"
+                multiple
+                onChange={(e) => setSelectedFiles(e.target.files)}
+              ></input>
+            </Form.Group>
+
+            <Form.Group>
+              <Button variant="info" type="submit">
+                Upload
+              </Button>
+            </Form.Group>
+            {progress && <ProgressBar now={progress} label={`${progress}%`} />}
+          </Form>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 
-export default Component;
+export default FileUpload;
